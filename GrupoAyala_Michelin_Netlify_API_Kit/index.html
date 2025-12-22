@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BETA TEST Ver 3.0 API MICHELIN - GRUPO AYALA</title>
+<style>
+:root{--bg:#020617;--panel:#0b1220;--border:#1f2937;--accent:#22c55e;--text:#e5e7eb;--muted:#9ca3af;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at top,#1e293b 0,#020617 50%,#000 100%);color:var(--text);}
+.container{max-width:1150px;margin:0 auto;padding:24px 16px 48px;position:relative;z-index:2;}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:16px;}
+.brand{display:flex;gap:12px;align-items:center;}
+.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#22c55e,#4ade80);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px;color:#020617;box-shadow:0 0 30px rgba(34,197,94,0.7);}
+h1{margin:0;font-size:20px;font-weight:650;}
+.subtitle{margin:4px 0 0;font-size:12px;color:var(--muted);}
+.pills{display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);font-size:11px;color:var(--muted);display:inline-flex;align-items:center;gap:6px;background:rgba(15,23,42,0.8);white-space:nowrap;}
+.pill .bullet{width:6px;height:6px;border-radius:999px;background:var(--accent);box-shadow:0 0 12px rgba(34,197,94,0.9);}
+.badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,0.7);font-size:11px;color:var(--muted);background:rgba(15,23,42,0.8);}
+.badge .dot{width:7px;height:7px;border-radius:999px;background:rgba(148,163,184,0.9);}
+.badge.ok{border-color:rgba(34,197,94,0.55);color:rgba(34,197,94,0.95);background:rgba(34,197,94,0.08);} .badge.ok .dot{background:rgba(34,197,94,0.95);}
+.badge.err{border-color:rgba(239,68,68,0.55);color:rgba(239,68,68,0.95);background:rgba(239,68,68,0.08);} .badge.err .dot{background:rgba(239,68,68,0.95);}
+.card{background:radial-gradient(circle at top left,#111827 0,#020617 48%);border-radius:20px;border:1px solid rgba(31,41,55,0.9);padding:16px 16px 18px;box-shadow:0 18px 40px rgba(0,0,0,0.75);}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+label{font-size:11px;color:var(--muted);margin-bottom:4px;display:block;}
+select,input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(55,65,81,0.9);background:rgba(15,23,42,0.85);color:var(--text);font-size:12px;outline:none;}
+.url-box{margin-top:10px;padding:8px;border-radius:12px;background:rgba(15,23,42,0.9);border:1px solid rgba(55,65,81,0.9);font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted);overflow-x:auto;}
+.url-box code{color:#e5e7eb;}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px;}
+.kpi{padding:10px 12px;border-radius:14px;border:1px solid rgba(31,41,55,0.9);background:rgba(2,6,23,0.55);}
+.kpi .label{font-size:11px;color:var(--muted);} .kpi .value{margin-top:4px;font-size:16px;font-weight:750;}
+.table-wrap{max-height:520px;overflow:auto;border-radius:12px;border:1px solid rgba(31,41,55,0.9);background:rgba(15,23,42,0.7);margin-top:14px;}
+table{width:100%;border-collapse:collapse;font-size:11px;}
+th,td{padding:6px 8px;border-top:1px solid rgba(31,41,55,0.9);text-align:left;}
+thead th{position:sticky;top:0;background:#020617;z-index:1;}
+td.num{text-align:right;font-variant-numeric:tabular-nums;}
+.footer{margin-top:14px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);}
+.footer strong{color:#e5e7eb;}
+.watermark-layer{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:0.18;mix-blend-mode:screen;}
+.watermark-grid{position:absolute;inset:-40%;transform:rotate(-24deg);display:grid;grid-template-columns:repeat(3,1fr);gap:80px;align-content:center;justify-items:center;}
+.wm{font-weight:800;letter-spacing:1.6px;text-transform:uppercase;color:rgba(229,231,235,0.55);font-size:18px;white-space:nowrap;text-shadow:0 0 18px rgba(0,0,0,0.55);}
+.wm2{margin-top:6px;font-size:12px;font-weight:650;color:rgba(229,231,235,0.38);letter-spacing:1.2px;}
+@media (max-width:880px){.row{grid-template-columns:1fr;}.kpis{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="watermark-layer" aria-hidden="true"><div class="watermark-grid" id="wmGrid"></div></div>
+
+<div class="container">
+  <header class="header">
+    <div class="brand">
+      <div class="logo">GA</div>
+      <div>
+        <h1>BETA TEST Ver 3.0 API MICHELIN - GRUPO AYALA</h1>
+        <p class="subtitle" id="subline">Uso exclusivo GRUPO AYALA - Michelin</p>
+      </div>
+    </div>
+    <div class="pills">
+      <div class="pill"><span class="bullet"></span><span>GET /whs-inventory/v1?warehouse=...&mspn=...</span></div>
+      <div class="badge" id="apiStatus"><span class="dot"></span><span>Esperando…</span></div>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="row">
+      <div>
+        <label for="whs">warehouse (ALMACEN)</label>
+        <select id="whs"></select>
+      </div>
+      <div>
+        <label for="mspn">mspn (ARTICULO)</label>
+        <input id="mspn" placeholder="Ej. 538" />
+      </div>
+    </div>
+
+    <div class="url-box"><code id="urlPreview"></code></div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="label">Bodegas (WHS) en vista</div><div class="value" id="kpiWhs">—</div></div>
+      <div class="kpi"><div class="label">Renglones</div><div class="value" id="kpiRows">—</div></div>
+      <div class="kpi"><div class="label">Total disponible</div><div class="value" id="kpiTotal">—</div></div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ALMACEN</th><th>SHIP TO</th><th>MSPN (ARTICULO)</th><th class="num">DISPONIBLE</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="4" class="num">Cargando…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="footer">
+      <div><strong>Uso exclusivo GRUPO AYALA - Michelin</strong></div>
+      <div><strong></strong> <code></code></div>
+    </div>
+  </section>
+</div>
+
+<script>
+const WATERMARK="USO EXCLUSIVO GRUPO AYALA - MICHELIN";
+function $(id){return document.getElementById(id);}
+function fmt(n){return Number(n||0).toLocaleString(undefined,{maximumFractionDigits:0});}
+function setStatus(kind,text){
+  const el=$("apiStatus");
+  el.classList.remove("ok","err");
+  if(kind) el.classList.add(kind);
+  el.querySelector("span:last-child").textContent=text;
+}
+function buildWatermark(){
+  const sid=(Math.random().toString(16).slice(2,10)).toUpperCase();
+  const dt=new Date();
+  const stamp=dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0")+" "+
+              String(dt.getHours()).padStart(2,"0")+":"+String(dt.getMinutes()).padStart(2,"0")+":"+String(dt.getSeconds()).padStart(2,"0");
+  $("subline").innerHTML=`Uso exclusivo GRUPO AYALA - Michelin • Sesión <strong>${sid}</strong> • ${stamp}`;
+  const grid=$("wmGrid"); grid.innerHTML="";
+  for(let i=0;i<18;i++){
+    const div=document.createElement("div");
+    div.className="wm";
+    div.innerHTML=`${WATERMARK}<div class="wm2">Sesión ${sid} • ${stamp}</div>`;
+    grid.appendChild(div);
+  }
+}
+
+let allWarehouses=["ALL"];
+function buildUrl(){
+  const whs=$("whs").value;
+  const mspn=($("mspn").value||"").trim();
+  const p=new URLSearchParams();
+  if(whs && whs!=="ALL") p.set("warehouse",whs);
+  if(mspn) p.set("mspn",mspn);
+  p.set("ts",Date.now().toString());
+  const url=`/whs-inventory/v1?${p.toString()}`;
+  $("urlPreview").textContent=location.origin + url;
+  return url;
+}
+
+function render(items, whsValue){
+  const rows=items.slice(0,600);
+  $("tbody").innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.warehouse}</td>
+      <td>${r.shipTo || "-"}</td>
+      <td>${r.mspn}</td>
+      <td class="num">${fmt(r.available)}</td>
+    </tr>
+  `).join("") || '<tr><td colspan="4" class="num">Sin datos</td></tr>';
+
+  const whsSet=new Set(items.map(x=>x.warehouse));
+  const total=items.reduce((a,x)=>a+(Number(x.available)||0),0);
+  $("kpiWhs").textContent = (whsValue==="ALL") ? fmt(whsSet.size) : "1";
+  $("kpiRows").textContent = fmt(items.length);
+  $("kpiTotal").textContent = fmt(total);
+}
+
+async function loadWarehouses(){
+  const res = await fetch(`/whs-inventory/v1?ts=${Date.now()}`, {cache:"no-store"});
+  const js = await res.json();
+  const whs = Array.from(new Set((js.items||[]).map(x=>x.warehouse))).sort();
+  allWarehouses=["ALL",...whs];
+  $("whs").innerHTML = allWarehouses.map(w=>`<option value="${w}">${w}</option>`).join("");
+}
+
+async function load(){
+  const url = buildUrl();
+  setStatus("", "Consultando API…");
+  try{
+    const res = await fetch(url, {cache:"no-store"});
+    const js = await res.json();
+    if(!res.ok || !js.ok) throw new Error(js.error || ("HTTP "+res.status));
+    setStatus("ok", `API OK (${js.count} registros)`);
+    render(js.items||[], $("whs").value);
+  }catch(e){
+    console.error(e);
+    setStatus("err", "Error consultando API");
+    $("tbody").innerHTML = '<tr><td colspan="4" class="num">Error</td></tr>';
+  }
+}
+
+document.addEventListener("DOMContentLoaded", async ()=>{
+  buildWatermark();
+  await loadWarehouses();
+  $("whs").addEventListener("change", load);
+  $("mspn").addEventListener("input", ()=>{ clearTimeout(window.__t); window.__t=setTimeout(load, 300);});
+  await load();
+  setInterval(load, 60000); // cambia a 900000 para 15 min
+});
+</script>
+</body>
+</html>
