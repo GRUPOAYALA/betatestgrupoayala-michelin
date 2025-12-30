@@ -173,16 +173,26 @@ async function loadWarehousesAndMaps(){
 }
 
 function buildUrl(){
-  const whs=$("whs").value;
-  const mspn=($("mspn").value||"").trim();
-  const p=new URLSearchParams();
-  if(whs && whs!=="ALL") p.set("warehouse",whs);
-  if(mspn) p.set("mspn",mspn);
-  p.set("ts",Date.now().toString());
-  const url=`/whs-inventory/v1?${p.toString()}`;
-  $("urlPreview").textContent=location.origin + url;
+  const whs = $("whs").value;
+  const mspn = ($("mspn").value || "").trim();
+  const p = new URLSearchParams();
+
+  if (whs && whs !== "ALL") {
+    p.set("warehouse", whs);
+  }
+
+  if (mspn) {
+    p.set("mspn", mspn);
+  }
+
+  const url = p.toString()
+    ? `/whs-inventory/v1?${p.toString()}`
+    : `/whs-inventory/v1`;
+
+  $("urlPreview").textContent = location.origin + url;
   return url;
 }
+
 
 function extractRows(schemaJson, warehouse){
   const rows=[];
