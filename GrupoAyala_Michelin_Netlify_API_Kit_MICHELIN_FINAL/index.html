@@ -208,9 +208,8 @@ function buildUrl(){
     p.set("mspn", mspn);
   }
 
-  const url = p.toString()
-    ? `/whs-inventory/v1?${p.toString()}`
-    : `/whs-inventory/v1`;
+  const qs = p.toString();
+  const url = qs ? `/whs-inventory/v1?${qs}` : `/whs-inventory/v1`;
 
   $("urlPreview").textContent = location.origin + url;
   return url;
