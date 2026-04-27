@@ -1,6 +1,5 @@
 const {
   json,
-  validateHeaders,
   buildIssueTimestamp,
   buildDocumentNumber
 } = require("./_lib/auth");
@@ -19,7 +18,15 @@ function normalizeHeader(value) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function parseWarehouses(text) {
+function pickIndex(headers, candidates) {
+  for (const candidate of candidates) {
+    const idx = headers.indexOf(candidate);
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function parseWarehousesCsv(text) {
   const lines = String(text || "")
     .replace(/\r/g, "")
     .split("\n")
@@ -29,43 +36,46 @@ function parseWarehouses(text) {
 
   const delimiter = detectDelimiter(lines[0]);
   const headers = lines[0].split(delimiter).map(normalizeHeader);
-  const idxWarehouse = headers.indexOf("ALMACEN");
-  const idxShipTo = headers.indexOf("SHIPTO") !== -1 ? headers.indexOf("SHIPTO") : headers.indexOf("SHIP_TO");
+
+  const idxWarehouse = pickIndex(headers, ["ALMACEN", "WAREHOUSE", "WHS"]);
+  const idxShipTo = pickIndex(headers, ["SHIPTO", "SHIP_TO", "SHIP TO", "CONSIGNATARIO"]);
 
   if (idxWarehouse === -1) {
-    throw new Error("CSV must contain ALMACEN column.");
+    throw new Error("CSV must contain warehouse column.");
   }
 
-  const seen = new Map();
+  const map = new Map();
+
   for (let i = 1; i < lines.length; i += 1) {
-    const row = lines[i].split(delimiter);
-    const warehouse = String(row[idxWarehouse] ?? "").trim();
+    const parts = lines[i].split(delimiter);
+    const warehouse = String(parts[idxWarehouse] ?? "").trim();
+    const shipTo = idxShipTo !== -1 ? String(parts[idxShipTo] ?? "").trim() : "";
+
     if (!warehouse) continue;
-    const shipTo = idxShipTo !== -1 ? String(row[idxShipTo] ?? "").trim() : "";
-    const key = `${warehouse}__${shipTo}`;
-    if (!seen.has(key)) {
-      seen.set(key, {
-        warehouse,
-        ...(shipTo ? { shipTo } : {})
-      });
+
+    if (!map.has(warehouse)) {
+      map.set(warehouse, { warehouse, shipTo });
     }
   }
 
-  return Array.from(seen.values()).sort((a, b) => a.warehouse.localeCompare(b.warehouse));
+  return Array.from(map.values());
 }
 
-async function fetchWarehouses(event) {
+async function fetchInventoryCsv(event) {
   const proto = event.headers?.["x-forwarded-proto"] || "https";
   const host = event.headers?.host;
   if (!host) throw new Error("Missing host header.");
+
   const url = `${proto}://${host}/inventarios.csv?ts=${Date.now()}`;
   const response = await fetch(url, {
     headers: { "cache-control": "no-store" }
   });
+
   if (!response.ok) {
     throw new Error(`Inventory CSV request failed with status ${response.status}.`);
   }
-  return parseWarehouses(await response.text());
+
+  return parseWarehousesCsv(await response.text());
 }
 
 function buildBaseResponse() {
@@ -86,11 +96,8 @@ exports.handler = async (event) => {
     return json(405, { error: "method_not_allowed", message: "Only GET is allowed." });
   }
 
-  const auth = validateHeaders(event);
-  if (!auth.ok) return auth.response;
-
   try {
-    const warehouses = await fetchWarehouses(event);
+    const warehouses = await fetchInventoryCsv(event);
 
     return json(200, {
       ...buildBaseResponse(),
@@ -101,6 +108,7 @@ exports.handler = async (event) => {
     });
   } catch (error) {
     console.error("catalog-warehouse error", error);
+
     return json(500, {
       ...buildBaseResponse(),
       errorCode: { errorCode: 304 },

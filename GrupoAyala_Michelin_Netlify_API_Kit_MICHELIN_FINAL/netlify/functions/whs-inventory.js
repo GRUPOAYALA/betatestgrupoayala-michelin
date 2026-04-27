@@ -1,6 +1,5 @@
 const {
   json,
-  validateHeaders,
   buildIssueTimestamp,
   buildDocumentNumber
 } = require("./_lib/auth");
@@ -42,13 +41,10 @@ function parseCsv(text) {
     .split("\n")
     .filter((line) => line.trim() !== "");
 
-  if (lines.length < 2) {
-    return [];
-  }
+  if (lines.length < 2) return [];
 
   const delimiter = detectDelimiter(lines[0]);
-  const headersRaw = lines[0].split(delimiter);
-  const headers = headersRaw.map(normalizeHeader);
+  const headers = lines[0].split(delimiter).map(normalizeHeader);
 
   const idxWarehouse = pickIndex(headers, ["ALMACEN", "WAREHOUSE", "WHS"]);
   const idxShipTo = pickIndex(headers, ["SHIPTO", "SHIP_TO", "SHIP TO", "CONSIGNATARIO"]);
@@ -84,8 +80,7 @@ function parseCsv(text) {
       warehouse,
       shipTo: idxShipTo !== -1 ? String(parts[idxShipTo] ?? "").trim() : "",
       mspn,
-      description:
-        idxDescription !== -1 ? String(parts[idxDescription] ?? "").trim() : String(mspn),
+      description: idxDescription !== -1 ? String(parts[idxDescription] ?? "").trim() : String(mspn),
       eanucc: idxEan !== -1 ? String(parts[idxEan] ?? "").trim() : "",
       available: toInt(parts[idxAvailable])
     });
@@ -98,13 +93,16 @@ async function fetchInventoryCsv(event) {
   const proto = event.headers?.["x-forwarded-proto"] || "https";
   const host = event.headers?.host;
   if (!host) throw new Error("Missing host header.");
+
   const url = `${proto}://${host}/inventarios.csv?ts=${Date.now()}`;
   const response = await fetch(url, {
     headers: { "cache-control": "no-store" }
   });
+
   if (!response.ok) {
     throw new Error(`Inventory CSV request failed with status ${response.status}.`);
   }
+
   return parseCsv(await response.text());
 }
 
@@ -125,9 +123,6 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "GET") {
     return json(405, { error: "method_not_allowed", message: "Only GET is allowed." });
   }
-
-  const auth = validateHeaders(event);
-  if (!auth.ok) return auth.response;
 
   try {
     const warehouse = String(event.queryStringParameters?.warehouse || "").trim();
@@ -184,6 +179,7 @@ exports.handler = async (event) => {
     });
   } catch (error) {
     console.error("whs-inventory error", error);
+
     return json(500, {
       ...buildBaseResponse(),
       errorCode: { errorCode: 304 },
