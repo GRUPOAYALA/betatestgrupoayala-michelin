@@ -48,7 +48,7 @@ function parseCsv(text) {
 
   const idxWarehouse = pickIndex(headers, ["ALMACEN", "WAREHOUSE", "WHS"]);
   const idxShipTo = pickIndex(headers, ["SHIPTO", "SHIP_TO", "SHIP TO", "CONSIGNATARIO"]);
-  const idxMspn = pickIndex(headers, ["ARTICULO", "MSPN", "SKU", "PRODUCTO"]);
+  const idxMspn = pickIndex(headers, ["ARTICULO", "MSPN", "MPSN", "SKU", "PRODUCTO"]);
   const idxAvailable = pickIndex(headers, ["DISPONIBLE", "AVAILABLE", "EXISTENCIA"]);
   const idxDescription = pickIndex(headers, [
     "DESCRIPCION",
@@ -70,10 +70,13 @@ function parseCsv(text) {
   }
 
   const rows = [];
+
   for (let i = 1; i < lines.length; i += 1) {
     const parts = lines[i].split(delimiter);
+
     const warehouse = String(parts[idxWarehouse] ?? "").trim();
     const mspn = String(parts[idxMspn] ?? "").trim();
+
     if (!warehouse || !mspn) continue;
 
     rows.push({
@@ -92,9 +95,13 @@ function parseCsv(text) {
 async function fetchInventoryCsv(event) {
   const proto = event.headers?.["x-forwarded-proto"] || "https";
   const host = event.headers?.host;
-  if (!host) throw new Error("Missing host header.");
+
+  if (!host) {
+    throw new Error("Missing host header.");
+  }
 
   const url = `${proto}://${host}/inventarios.csv?ts=${Date.now()}`;
+
   const response = await fetch(url, {
     headers: { "cache-control": "no-store" }
   });
@@ -115,32 +122,45 @@ function buildBaseResponse() {
   };
 }
 
+function normalizeQueryValue(value) {
+  return String(value || "").trim();
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
     return json(204, { ok: true });
   }
 
   if (event.httpMethod !== "GET") {
-    return json(405, { error: "method_not_allowed", message: "Only GET is allowed." });
+    return json(405, {
+      error: "method_not_allowed",
+      message: "Only GET is allowed."
+    });
   }
 
   try {
-    const warehouse = String(event.queryStringParameters?.warehouse || "").trim();
-    const mspn = String(event.queryStringParameters?.mspn || "").trim();
-
-    if (!warehouse) {
-      return json(400, {
-        ...buildBaseResponse(),
-        errorCode: { errorCode: 914 },
-        errorHeader: "Missing warehouse",
-        totalLineItemNumber: 0,
-        lineLevel: []
-      });
-    }
+    const warehouse = normalizeQueryValue(event.queryStringParameters?.warehouse);
+    const mspn = normalizeQueryValue(
+      event.queryStringParameters?.mspn || event.queryStringParameters?.mpsn
+    );
 
     const items = await fetchInventoryCsv(event);
-    let filtered = items.filter((item) => item.warehouse === warehouse);
-    if (mspn) filtered = filtered.filter((item) => item.mspn === mspn);
+
+    let filtered = items;
+
+    // warehouse es OPCIONAL:
+    // - Si viene, filtra por warehouse.
+    // - Si no viene, conserva todo el inventario.
+    if (warehouse) {
+      filtered = filtered.filter((item) => item.warehouse === warehouse);
+    }
+
+    // mspn / mpsn es OPCIONAL:
+    // - Si viene, filtra por articulo.
+    // - Si no viene, conserva lo filtrado por warehouse o todo el inventario.
+    if (mspn) {
+      filtered = filtered.filter((item) => item.mspn === mspn);
+    }
 
     if (filtered.length === 0) {
       return json(404, {
